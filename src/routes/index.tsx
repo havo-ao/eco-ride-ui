@@ -1,15 +1,11 @@
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-} from "@ionic/react";
-import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import StationsPage from "../pages/StationsPage";
 import RidesPage from "../pages/RidesPage";
+import RegisterPage from "../pages/RegisterPage";
+import AppContainer from "../components/AppContainer";
+import { PublicOnly, RequireAuth } from "./guards";
 
 export default function AppRoutes() {
   return (
@@ -18,57 +14,52 @@ export default function AppRoutes() {
       <Route
         path="/home"
         element={
-          <Shell>
+          <AppContainer>
             <HomePage />
-          </Shell>
+          </AppContainer>
         }
       />
       <Route
         path="/login"
         element={
-          <Shell>
-            <LoginPage />
-          </Shell>
+          <AppContainer>
+            <PublicOnly>
+              <LoginPage />
+            </PublicOnly>
+          </AppContainer>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <AppContainer>
+            <PublicOnly>
+              <RegisterPage />
+            </PublicOnly>
+          </AppContainer>
         }
       />
       <Route
         path="/stations"
         element={
-          <Shell>
-            <StationsPage />
-          </Shell>
+          <AppContainer>
+            <RequireAuth>
+              <StationsPage />
+            </RequireAuth>
+          </AppContainer>
         }
       />
       <Route
         path="/rides"
         element={
-          <Shell>
-            <RidesPage />
-          </Shell>
+          <AppContainer>
+            <RequireAuth>
+              <RidesPage />
+            </RequireAuth>
+          </AppContainer>
         }
       />
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
-  );
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>EcoRide</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen>
-        <nav style={{ padding: 12, display: "flex", gap: 12 }}>
-          <Link to="/home">Home</Link>
-          <Link to="/stations">Stations</Link>
-          <Link to="/rides">Rides</Link>
-          <Link to="/login">Login</Link>
-        </nav>
-        {children}
-      </IonContent>
-    </IonPage>
   );
 }
