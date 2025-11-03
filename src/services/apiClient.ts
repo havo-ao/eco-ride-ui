@@ -19,9 +19,12 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
       const data = await res.json();
       msg = data?.message || msg;
     } catch {
-      // Ignore JSON parse error
+      
     }
     throw new Error(msg);
+  }
+  if (res.status === 204 || res.status === 201) {
+    return undefined as T;
   }
 
   return res.json();

@@ -26,6 +26,7 @@ import {
   walletOutline,
   arrowForwardOutline,
   sparklesOutline,
+  list,
 } from "ionicons/icons";
 import { useNavigate } from "react-router-dom";
 import "./homepage.scss";
@@ -184,6 +185,21 @@ export default function HomePage() {
                 <span>Uso seguro y verificado</span>
               </div>
             </div>
+          </div>
+        </IonCol>
+      </IonRow>
+
+      <IonRow className="highlights">
+        <IonCol size="12" sizeMd="10" sizeLg="8" offsetMd="1" offsetLg="2">
+          <div className="comments-section" style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <IonButton
+              size="large"
+              color="medium"
+              onClick={() => navigate("/commentList")}
+            >
+              <IonIcon icon={list} slot="start" />
+              Ver comentarios de usuarios
+            </IonButton>
           </div>
         </IonCol>
       </IonRow>
