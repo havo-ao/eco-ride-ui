@@ -162,7 +162,7 @@ export default function HomePage() {
                 <IonIcon icon={statsChartOutline} />
               </div>
               <div className="stat-text">
-                <strong>+120</strong>
+                <strong>+3</strong>
                 <span>Estaciones activas</span>
               </div>
             </div>
