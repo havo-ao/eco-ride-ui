@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useMemo, useRef, useEffect } from "react";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@ionic/react";
 import FormCard from "../components/FormCard";
 import { useNavigate } from "react-router-dom";
+import { loginUser } from "../services/users.service";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -60,14 +62,13 @@ export default function LoginPage() {
     try {
       setLoading(true);
       setError(null);
-
-      // Demo: simulación login
-      await new Promise((r) => setTimeout(r, 600));
-      localStorage.setItem("auth_token", "demo-token");
+      const response = await loginUser({ email, password: pwd });
+      localStorage.setItem("auth_token", response.token);
       setSuccess(true);
-      setTimeout(() => navigate("/stations", { replace: true }), 900);
-    } catch {
-      setError("Error al iniciar sesión");
+      setTimeout(() => navigate("/", { replace: true }), 900);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || "Error al iniciar sesión";
+      setError(message);
     } finally {
       setLoading(false);
     }
