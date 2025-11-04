@@ -2,8 +2,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
 import StationsPage from "../pages/StationsPage";
-import RidesPage from "../pages/RidesPage";
 import RegisterPage from "../pages/RegisterPage";
+import RidesPage from "../pages/RidesPage";
 import AppContainer from "../components/AppContainer";
 import { PublicOnly, RequireAuth } from "./guards";
 
