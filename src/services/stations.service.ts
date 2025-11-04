@@ -25,7 +25,6 @@ export type NearestStationResponse = StationWithAvailability & {
 };
 
 export function getStations(): Promise<Station[]> {
-  // backend: GET /api/stations
   return apiGet<Station[]>("/api/stations");
 }
 
@@ -39,4 +38,10 @@ export async function getNearestStation(
   return apiGet<NearestStationResponse | null>(
     `/api/stations/nearest?${query}`
   );
+}
+
+export function getStationsWithAvailability(): Promise<
+  StationWithAvailability[]
+> {
+  return apiGet<StationWithAvailability[]>("/api/stations/with-availability");
 }

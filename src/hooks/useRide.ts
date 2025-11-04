@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Ride } from "../services/rides.service";
 import {
   getActiveRide as getActiveRideApi,
   startRide as startRideApi,
   endRide as endRideApi,
+  type Ride,
   type StartRideInput,
   type EndRideInput,
 } from "../services/rides.service";

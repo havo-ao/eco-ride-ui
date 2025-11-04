@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from "react";
 import {
   IonBadge,
@@ -8,7 +9,11 @@ import {
   IonCardSubtitle,
   IonCardTitle,
   IonIcon,
+  IonInput,
+  IonItem,
   IonList,
+  IonSelect,
+  IonSelectOption,
   IonSpinner,
   IonText,
   IonToast,
@@ -20,8 +25,13 @@ import {
   warningOutline,
 } from "ionicons/icons";
 import useReservation from "../../hooks/useReservation";
+import useRide from "../../hooks/useRide";
 import type { BikeType } from "../../services/reservations.service";
 import StationMap from "../../components/StationMap";
+import {
+  getStationsWithAvailability,
+  type StationWithAvailability,
+} from "../../services/stations.service";
 
 function formatRemaining(seconds: number | null): string {
   if (seconds === null || seconds < 0) return "--:--";
@@ -39,12 +49,28 @@ export default function RidesPage() {
     nearestStation,
     loadingReservation,
     loadingNearest,
-    error,
+    error: reservationError,
     geoError,
     createReservation,
     cancelReservation,
-    setError,
+    refreshActiveReservation,
+    setError: setReservationError,
   } = useReservation();
+
+  const {
+    activeRide,
+    loading: loadingRide,
+    error: rideError,
+    startRide,
+    endRide,
+    setError: setRideError,
+  } = useRide();
+
+  const [stations, setStations] = useState<StationWithAvailability[]>([]);
+  const [loadingStations, setLoadingStations] = useState(false);
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(
+    null
+  );
 
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [creatingType, setCreatingType] = useState<BikeType | null>(null);
@@ -52,6 +78,43 @@ export default function RidesPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
 
+  const [arrivalBikeId, setArrivalBikeId] = useState("");
+  const [bikeConfirmed, setBikeConfirmed] = useState(false);
+
+  const [destinationStationId, setDestinationStationId] = useState<
+    number | null
+  >(null);
+  const [endingRide, setEndingRide] = useState(false);
+
+  const hasActiveRide = !!activeRide;
+  const hasActiveReservation = !!activeReservation && !hasActiveRide;
+
+  // Cargar estaciones con disponibilidad
+  useEffect(() => {
+    async function loadStations() {
+      try {
+        setLoadingStations(true);
+        const list = await getStationsWithAvailability();
+        setStations(list);
+        if (!selectedStationId && list.length > 0) {
+          setSelectedStationId(list[0].id);
+        }
+      } catch (e) {
+        const msg =
+          e instanceof Error
+            ? e.message
+            : "Error al cargar las estaciones disponibles.";
+        setReservationError(msg);
+        setErrorToast(msg);
+      } finally {
+        setLoadingStations(false);
+      }
+    }
+
+    void loadStations();
+  }, []);
+
+  // Contador de expiración de reserva
   useEffect(() => {
     if (!activeReservation) {
       setRemainingSeconds(null);
@@ -70,41 +133,71 @@ export default function RidesPage() {
     return () => window.clearInterval(id);
   }, [activeReservation]);
 
+  // Sincronizar errores en toast
   useEffect(() => {
-    if (error) {
-      setErrorToast(error);
+    if (reservationError) {
+      setErrorToast(reservationError);
     }
-  }, [error]);
+  }, [reservationError]);
+
+  useEffect(() => {
+    if (rideError) {
+      setErrorToast(rideError);
+    }
+  }, [rideError]);
+
+  // Estación seleccionada: la elegida o la más cercana si no hay selección
+  const stationForReservation = useMemo(() => {
+    if (selectedStationId) {
+      const found = stations.find((s) => s.id === selectedStationId);
+      if (found) return found;
+    }
+    if (nearestStation) return nearestStation;
+    return null;
+  }, [selectedStationId, stations, nearestStation]);
 
   const anyAvailable = useMemo(() => {
-    if (!nearestStation) return false;
+    if (!stationForReservation) return false;
     return (
-      nearestStation.availableMechanical + nearestStation.availableElectric > 0
+      stationForReservation.availableMechanical +
+        stationForReservation.availableElectric >
+      0
     );
-  }, [nearestStation]);
+  }, [stationForReservation]);
 
   async function handleReserveClick(bikeType: BikeType) {
-    if (!nearestStation) return;
+    if (!stationForReservation) return;
     if (activeReservation) {
       const msg = "Ya tienes una reserva activa.";
-      setError(msg);
+      setReservationError(msg);
+      setErrorToast(msg);
+      return;
+    }
+    if (hasActiveRide) {
+      const msg = "No puedes reservar mientras tienes un viaje activo.";
+      setReservationError(msg);
       setErrorToast(msg);
       return;
     }
 
     try {
       setCreatingType(bikeType);
-      setError(null);
-      const reservation = await createReservation(nearestStation.id, bikeType);
+      setReservationError(null);
+      const reservation = await createReservation(
+        stationForReservation.id,
+        bikeType
+      );
       setSuccessMessage(
         `Reserva creada en ${reservation.stationName}. Tienes 10 minutos para llegar.`
       );
+      setArrivalBikeId("");
+      setBikeConfirmed(false);
     } catch (e) {
       const message =
         e instanceof Error
           ? e.message
           : "No se pudo crear la reserva. Intenta de nuevo.";
-      setError(message);
+      setReservationError(message);
       setErrorToast(message);
     } finally {
       setCreatingType(null);
@@ -117,28 +210,105 @@ export default function RidesPage() {
       setCancelling(true);
       await cancelReservation(activeReservation.id);
       setSuccessMessage("Tu reserva ha sido cancelada.");
+      setArrivalBikeId("");
+      setBikeConfirmed(false);
     } catch (e) {
       const message =
         e instanceof Error
           ? e.message
           : "No se pudo cancelar la reserva. Intenta de nuevo.";
-      setError(message);
+      setReservationError(message);
       setErrorToast(message);
     } finally {
       setCancelling(false);
     }
   }
 
+  // Confirmación de bicicleta: "¿Ya llegaste?"
+  function handleConfirmBike() {
+    if (!activeReservation) return;
+    const expectedId = String(activeReservation.bikeId);
+    if (arrivalBikeId.trim() === expectedId) {
+      setBikeConfirmed(true);
+      setSuccessMessage(
+        `Perfecto, llegaste a la estación y tu bicicleta #${expectedId} está lista.`
+      );
+    } else {
+      setBikeConfirmed(false);
+      const msg = `La bicicleta reservada es la #${expectedId}. Verifica el número en la estación.`;
+      setReservationError(msg);
+      setErrorToast(msg);
+    }
+  }
+
+  // Iniciar viaje
+  async function handleStartRide() {
+    if (!activeReservation) return;
+    if (!bikeConfirmed) {
+      const msg =
+        "Primero confirma el ID de la bicicleta antes de iniciar el viaje.";
+      setReservationError(msg);
+      setErrorToast(msg);
+      return;
+    }
+    try {
+      setRideError(null);
+      const bikeId = activeReservation.bikeId;
+      await startRide({
+        reservationId: activeReservation.id,
+        bikeId,
+      });
+      // La reserva ya no debe estar activa
+      await refreshActiveReservation();
+      setSuccessMessage("Tu viaje ha comenzado. ¡Buen recorrido!");
+    } catch (e) {
+      const message =
+        e instanceof Error
+          ? e.message
+          : "No se pudo iniciar el viaje. Intenta de nuevo.";
+      setRideError(message);
+      setErrorToast(message);
+    }
+  }
+
+  // Finalizar viaje
+  async function handleEndRide() {
+    if (!activeRide || !destinationStationId) return;
+    try {
+      setEndingRide(true);
+      setRideError(null);
+      await endRide(activeRide.id, { destinationStationId });
+      setSuccessMessage("Tu viaje ha finalizado correctamente.");
+      setDestinationStationId(null);
+      setBikeConfirmed(false);
+      setArrivalBikeId("");
+      // Por si el backend, después de finalizar, permite nuevas reservas
+      await refreshActiveReservation();
+    } catch (e) {
+      const message =
+        e instanceof Error
+          ? e.message
+          : "No se pudo finalizar el viaje. Intenta de nuevo.";
+      setRideError(message);
+      setErrorToast(message);
+    } finally {
+      setEndingRide(false);
+    }
+  }
+
   return (
     <div className="ion-padding">
       <IonList inset={true}>
+        {/* BLOQUE 1: Reserva o viaje activo */}
         <IonCard>
           <IonCardHeader>
-            <IonCardSubtitle>Reserva de bicicleta</IonCardSubtitle>
-            <IonCardTitle>Estado de tu reserva</IonCardTitle>
+            <IonCardSubtitle>Reserva y viaje</IonCardSubtitle>
+            <IonCardTitle>
+              {hasActiveRide ? "Viaje activo" : "Estado de tu reserva"}
+            </IonCardTitle>
           </IonCardHeader>
           <IonCardContent>
-            {loadingReservation ? (
+            {loadingReservation || loadingRide ? (
               <div
                 style={{
                   display: "flex",
@@ -147,9 +317,9 @@ export default function RidesPage() {
                 }}
               >
                 <IonSpinner name="dots" />
-                <IonText>Cargando reserva activa...</IonText>
+                <IonText>Cargando información...</IonText>
               </div>
-            ) : activeReservation ? (
+            ) : hasActiveRide && activeRide ? (
               <div style={{ display: "grid", gap: 12 }}>
                 <div
                   style={{
@@ -159,7 +329,83 @@ export default function RidesPage() {
                     flexWrap: "wrap",
                   }}
                 >
-                  <IonBadge color="success">Activa</IonBadge>
+                  <IonBadge color="success">Viaje activo</IonBadge>
+                  <IonText>
+                    <strong>{activeRide.originStationName}</strong>
+                  </IonText>
+                </div>
+
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <IonIcon icon={bicycleOutline} />
+                    <IonText>Bici #{activeRide.bikeId}</IonText>
+                  </div>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <IonIcon icon={timeOutline} />
+                    <IonText>
+                      Inicio:{" "}
+                      {new Date(activeRide.startTime).toLocaleTimeString()}
+                    </IonText>
+                  </div>
+                </div>
+
+                <IonText color="medium">
+                  Cuando llegues a tu destino, selecciona la estación donde vas
+                  a dejar la bicicleta y finaliza el viaje.
+                </IonText>
+
+                <IonItem lines="full">
+                  <IonSelect
+                    label="Estación de destino"
+                    labelPlacement="floating"
+                    value={destinationStationId}
+                    onIonChange={(e) =>
+                      setDestinationStationId(
+                        e.detail.value === undefined
+                          ? null
+                          : (e.detail.value as number)
+                      )
+                    }
+                    interface="popover"
+                  >
+                    {stations.map((s) => (
+                      <IonSelectOption key={s.id} value={s.id}>
+                        {s.name}
+                      </IonSelectOption>
+                    ))}
+                  </IonSelect>
+                </IonItem>
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <IonButton
+                    color="primary"
+                    expand="block"
+                    onClick={handleEndRide}
+                    disabled={!destinationStationId || endingRide}
+                  >
+                    {endingRide ? (
+                      <IonSpinner name="dots" />
+                    ) : (
+                      "Finalizar viaje"
+                    )}
+                  </IonButton>
+                </div>
+              </div>
+            ) : hasActiveReservation && activeReservation ? (
+              <div style={{ display: "grid", gap: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <IonBadge color="success">Reserva activa</IonBadge>
                   <IonText>
                     <strong>{activeReservation.stationName}</strong>
                   </IonText>
@@ -208,28 +454,81 @@ export default function RidesPage() {
                     )}
                   </IonButton>
                 </div>
+
+                {/* ¿Ya llegaste? – confirmación de bici */}
+                <IonCard color="light">
+                  <IonCardHeader>
+                    <IonCardSubtitle>¿Ya llegaste?</IonCardSubtitle>
+                    <IonCardTitle>Confirma tu bicicleta</IonCardTitle>
+                  </IonCardHeader>
+                  <IonCardContent>
+                    <IonText color="medium">
+                      Ingresa el ID de la bicicleta que ves en la estación para
+                      confirmar que estás tomando la que reservaste.
+                    </IonText>
+
+                    <IonItem lines="full" className="ion-margin-top">
+                      <IonInput
+                        label="ID de la bicicleta"
+                        labelPlacement="floating"
+                        type="number"
+                        value={arrivalBikeId}
+                        onIonInput={(e) =>
+                          setArrivalBikeId(e.detail.value ?? "")
+                        }
+                      />
+                    </IonItem>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        flexWrap: "wrap",
+                        marginTop: 12,
+                      }}
+                    >
+                      <IonButton
+                        expand="block"
+                        color={bikeConfirmed ? "success" : "primary"}
+                        onClick={handleConfirmBike}
+                      >
+                        {bikeConfirmed ? "Bicicleta confirmada" : "Confirmar"}
+                      </IonButton>
+
+                      <IonButton
+                        expand="block"
+                        color="tertiary"
+                        onClick={handleStartRide}
+                        disabled={!bikeConfirmed}
+                      >
+                        Iniciar viaje
+                      </IonButton>
+                    </div>
+                  </IonCardContent>
+                </IonCard>
               </div>
             ) : (
               <div style={{ display: "grid", gap: 8 }}>
                 <IonText>
-                  Actualmente no tienes ninguna reserva activa. Busca la
-                  estación más cercana y reserva tu bicicleta antes de llegar.
+                  Actualmente no tienes ninguna reserva ni viaje activo. Elige
+                  una estación y reserva tu bicicleta antes de llegar.
                 </IonText>
               </div>
             )}
           </IonCardContent>
         </IonCard>
 
+        {/* BLOQUE 2: Estación para reservar (seleccionable) */}
         <IonCard>
           <IonCardHeader>
-            <IonCardSubtitle>Estación más cercana</IonCardSubtitle>
+            <IonCardSubtitle>Estación para reservar</IonCardSubtitle>
             <IonCardTitle>
               <IonIcon icon={locationOutline} style={{ marginRight: 6 }} />
-              Cerca de ti
+              Cerca de ti o seleccionada
             </IonCardTitle>
           </IonCardHeader>
           <IonCardContent>
-            {loadingNearest ? (
+            {loadingNearest || loadingStations ? (
               <div
                 style={{
                   display: "flex",
@@ -238,10 +537,32 @@ export default function RidesPage() {
                 }}
               >
                 <IonSpinner name="dots" />
-                <IonText>Buscando estaciones cercanas...</IonText>
+                <IonText>Cargando estaciones...</IonText>
               </div>
-            ) : nearestStation ? (
+            ) : stationForReservation ? (
               <div style={{ display: "grid", gap: 12 }}>
+                <IonItem lines="full">
+                  <IonSelect
+                    label="Estación"
+                    labelPlacement="floating"
+                    value={selectedStationId ?? stationForReservation.id}
+                    onIonChange={(e) =>
+                      setSelectedStationId(
+                        e.detail.value === undefined
+                          ? null
+                          : (e.detail.value as number)
+                      )
+                    }
+                    interface="popover"
+                  >
+                    {stations.map((s) => (
+                      <IonSelectOption key={s.id} value={s.id}>
+                        {s.name}
+                      </IonSelectOption>
+                    ))}
+                  </IonSelect>
+                </IonItem>
+
                 <div
                   style={{
                     display: "flex",
@@ -251,30 +572,31 @@ export default function RidesPage() {
                   }}
                 >
                   <IonText>
-                    <strong>{nearestStation.name}</strong>
+                    <strong>{stationForReservation.name}</strong>
                   </IonText>
                   <IonBadge color="primary">
-                    {nearestStation.type === "Residential"
+                    {stationForReservation.type === "Residential"
                       ? "Residencial"
-                      : nearestStation.type === "Metro"
+                      : stationForReservation.type === "Metro"
                       ? "Metro"
                       : "Centro Financiero"}
                   </IonBadge>
-                  <IonBadge color="medium">
-                    {(nearestStation.distanceMeters / 1000).toFixed(2)} km
-                  </IonBadge>
+                  {nearestStation &&
+                  stationForReservation.id === nearestStation.id ? (
+                    <IonBadge color="success">Más cercana</IonBadge>
+                  ) : null}
                 </div>
 
                 <IonText color="medium">
-                  Capacidad: {nearestStation.capacity} · Disponibles:{" "}
-                  {nearestStation.availableMechanical} mecánicas ·{" "}
-                  {nearestStation.availableElectric} eléctricas.
+                  Capacidad: {stationForReservation.capacity} · Disponibles:{" "}
+                  {stationForReservation.availableMechanical} mecánicas ·{" "}
+                  {stationForReservation.availableElectric} eléctricas.
                 </IonText>
 
                 <StationMap
-                  stationName={nearestStation.name}
-                  latitude={nearestStation.latitude}
-                  longitude={nearestStation.longitude}
+                  stationName={stationForReservation.name}
+                  latitude={stationForReservation.latitude}
+                  longitude={stationForReservation.longitude}
                 />
 
                 {!anyAvailable && (
@@ -307,8 +629,9 @@ export default function RidesPage() {
                     onClick={() => handleReserveClick("Mechanical")}
                     disabled={
                       creatingType !== null ||
-                      !!activeReservation ||
-                      nearestStation.availableMechanical === 0
+                      hasActiveReservation ||
+                      hasActiveRide ||
+                      stationForReservation.availableMechanical === 0
                     }
                   >
                     {creatingType === "Mechanical" ? (
@@ -323,8 +646,9 @@ export default function RidesPage() {
                     onClick={() => handleReserveClick("Electric")}
                     disabled={
                       creatingType !== null ||
-                      !!activeReservation ||
-                      nearestStation.availableElectric === 0
+                      hasActiveReservation ||
+                      hasActiveRide ||
+                      stationForReservation.availableElectric === 0
                     }
                   >
                     {creatingType === "Electric" ? (
@@ -337,18 +661,18 @@ export default function RidesPage() {
               </div>
             ) : (
               <IonText>
-                No pudimos encontrar estaciones cercanas.{" "}
+                No pudimos encontrar estaciones.{" "}
                 {geoError
                   ? `Detalle: ${geoError}`
-                  : "Intenta nuevamente o revisa el mapa de estaciones."}
+                  : "Intenta nuevamente o revisa el listado de estaciones."}
               </IonText>
             )}
           </IonCardContent>
         </IonCard>
 
-        {error ? (
+        {reservationError || rideError ? (
           <IonText color="danger" class="ion-padding-start">
-            Error: {error}
+            Error: {reservationError ?? rideError}
           </IonText>
         ) : null}
       </IonList>
