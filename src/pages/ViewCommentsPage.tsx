@@ -79,12 +79,12 @@ export const CommentsPage = () => {
         {comments.length === 0 ? (
           <IonText>No hay comentarios aún.</IonText>
         ) : (
-          <IonList>
+          <IonList> 
             {comments.map((comment, index) => (
               <IonCard key={index}>
                 <IonCardContent>
                   <IonText color="medium" style={{ fontSize: '0.875rem' }}>
-                    {comment.nombreUsuario} • {new Date(comment.date).toLocaleDateString()}
+                    {comment.nombreUsuario} 
                   </IonText>
                   <IonText>
                     <p>{comment.comentarioTexto}</p>

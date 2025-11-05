@@ -61,7 +61,13 @@ export default function AppRoutes() {
           </AppContainer>
         }
       />
-      <Route path="/comment" element={<AddCommentPage />} /> 
+      <Route 
+        path="/comment" 
+        element={
+          <AppContainer>
+            <AddCommentPage />
+          </AppContainer>
+        } /> 
       <Route 
         path="/commentList" 
         element={
