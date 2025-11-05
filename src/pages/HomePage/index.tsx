@@ -101,7 +101,7 @@ export default function HomePage() {
                 ecológicas para moverte rápido.
               </IonText>
               <div className="quick-actions">
-                <IonButton expand="block" onClick={() => navigate("/stations")}>
+                <IonButton expand="block" onClick={() => navigate("/rides")}>
                   Ver estaciones
                 </IonButton>
               </div>
@@ -138,16 +138,16 @@ export default function HomePage() {
               <div className="quick-icon" aria-hidden="true">
                 <IonIcon icon={walletOutline} />
               </div>
-              <IonCardTitle>Tarifas inteligentes</IonCardTitle>
-              <IonCardSubtitle>Ahorra más, pedalea más</IonCardSubtitle>
+              <IonCardTitle>Deja tu comentario</IonCardTitle>
+              <IonCardSubtitle>Déjanos tu opinión</IonCardSubtitle>
             </IonCardHeader>
             <IonCardContent>
               <IonText>
-                Tarifas dinámicas según distancia, tiempo y energía ahorrada.
+                Califícanos para brindarte un mejor servicio.
               </IonText>
               <div className="quick-actions">
-                <IonButton disabled expand="block">
-                  Muy pronto
+                <IonButton expand="block" onClick={() => navigate("/comment")}>
+                  Comentar
                 </IonButton>
               </div>
             </IonCardContent>
