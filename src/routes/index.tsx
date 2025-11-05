@@ -6,6 +6,8 @@ import RegisterPage from "../pages/RegisterPage";
 import RidesPage from "../pages/RidesPage";
 import AppContainer from "../components/AppContainer";
 import { PublicOnly, RequireAuth } from "./guards";
+import { AddCommentPage } from '../pages/AddCommentPage';
+import { CommentsPage } from '../pages/ViewCommentsPage';
 
 export default function AppRoutes() {
   return (
@@ -59,6 +61,20 @@ export default function AppRoutes() {
           </AppContainer>
         }
       />
+      <Route 
+        path="/comment" 
+        element={
+          <AppContainer>
+            <AddCommentPage />
+          </AppContainer>
+        } /> 
+      <Route 
+        path="/commentList" 
+        element={
+          <AppContainer>
+            <CommentsPage/>
+          </AppContainer>
+        } /> 
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );
