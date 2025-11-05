@@ -26,6 +26,7 @@ import {
   walletOutline,
   arrowForwardOutline,
   sparklesOutline,
+  list,
 } from "ionicons/icons";
 import { useNavigate } from "react-router-dom";
 import "./homepage.scss";
@@ -100,7 +101,7 @@ export default function HomePage() {
                 ecológicas para moverte rápido.
               </IonText>
               <div className="quick-actions">
-                <IonButton expand="block" onClick={() => navigate("/stations")}>
+                <IonButton expand="block" onClick={() => navigate("/rides")}>
                   Ver estaciones
                 </IonButton>
               </div>
@@ -137,16 +138,16 @@ export default function HomePage() {
               <div className="quick-icon" aria-hidden="true">
                 <IonIcon icon={walletOutline} />
               </div>
-              <IonCardTitle>Tarifas inteligentes</IonCardTitle>
-              <IonCardSubtitle>Ahorra más, pedalea más</IonCardSubtitle>
+              <IonCardTitle>Deja tu comentario</IonCardTitle>
+              <IonCardSubtitle>Déjanos tu opinión</IonCardSubtitle>
             </IonCardHeader>
             <IonCardContent>
               <IonText>
-                Tarifas dinámicas según distancia, tiempo y energía ahorrada.
+                Califícanos para brindarte un mejor servicio.
               </IonText>
               <div className="quick-actions">
-                <IonButton disabled expand="block">
-                  Muy pronto
+                <IonButton expand="block" onClick={() => navigate("/comment")}>
+                  Comentar
                 </IonButton>
               </div>
             </IonCardContent>
@@ -184,6 +185,21 @@ export default function HomePage() {
                 <span>Uso seguro y verificado</span>
               </div>
             </div>
+          </div>
+        </IonCol>
+      </IonRow>
+
+      <IonRow className="highlights">
+        <IonCol size="12" sizeMd="10" sizeLg="8" offsetMd="1" offsetLg="2">
+          <div className="comments-section" style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <IonButton
+              size="large"
+              color="medium"
+              onClick={() => navigate("/commentList")}
+            >
+              <IonIcon icon={list} slot="start" />
+              Ver comentarios de usuarios
+            </IonButton>
           </div>
         </IonCol>
       </IonRow>

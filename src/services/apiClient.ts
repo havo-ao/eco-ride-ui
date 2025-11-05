@@ -47,7 +47,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
         msg = data.message;
       }
     } catch {
-      // Ignore JSON parse error
+      // ignore error to parse
     }
     throw new Error(msg);
   }
