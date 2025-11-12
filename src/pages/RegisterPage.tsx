@@ -30,6 +30,7 @@ export default function RegisterPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [success, setSuccess] = useState(false);
   const [autoFocusInvalid, setAutoFocusInvalid] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   const firstNameRef = useRef<HTMLIonInputElement | null>(null);
   const lastNameRef = useRef<HTMLIonInputElement | null>(null);
@@ -90,19 +91,19 @@ export default function RegisterPage() {
       return;
     }
     try {
-      await submit({ firstName, lastName, email, password });
-      setSuccess(true);
-      setFirstName("");
-      setLastName("");
-      setEmail("");
-      setPassword("");
-      setTerms(false);
-      setTouched({});
-      setError(null);
-      setTimeout(() => navigate("/login"), 900);
-    } catch {
-      /* noop */
-    }
+  await submit({ firstName, lastName, email, password });
+  setSuccess(true);
+  setToastMessage("Cuenta creada. Revisa tu correo para activar tu cuenta."); // ✅ mensaje dinámico
+  setFirstName("");
+  setLastName("");
+  setEmail("");
+  setPassword("");
+  setTerms(false);
+  setTouched({});
+  setError(null);
+} catch {
+  setError("Error al crear la cuenta");
+}
   }
 
   return (
@@ -235,7 +236,7 @@ export default function RegisterPage() {
 
         <IonToast
           isOpen={success}
-          message="Cuenta creada con éxito"
+          message={toastMessage} // ✅ ahora sí existe
           duration={900}
           position="top"
           color="success"

@@ -14,15 +14,19 @@ export async function apiGet<T>(path: string): Promise<T> {
 
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
+    let code = "";
     try {
       const data = await res.json();
       if (typeof data?.message === "string") {
         msg = data.message;
+        code = data.code || "";
       }
     } catch {
       // ignoramos error al parsear JSON
     }
-    throw new Error(msg);
+    const error = new Error(msg) as any;
+    error.code = code; // ✅ Agregamos el código
+    throw error;
   }
 
   const data = (await res.json()) as T;
@@ -41,15 +45,19 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
 
   if (!res.ok) {
     let msg = "Error de servidor";
+    let code = "";
     try {
       const data = await res.json();
       if (typeof data?.message === "string") {
         msg = data.message;
+        code = data.code || "";
       }
     } catch {
-      // ignore error to parse
+      // ignoramos error al parsear JSON
     }
-    throw new Error(msg);
+    const error = new Error(msg) as any;
+    error.code = code; // ✅ Agregamos el código
+    throw error;
   }
 
   const data = (await res.json()) as T;
