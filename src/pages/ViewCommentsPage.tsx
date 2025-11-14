@@ -12,11 +12,10 @@ import {
 } from '@ionic/react';
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { commentsService } from '../services/comments.service';
 
 export const CommentsPage = () => {
-  const navigate = useNavigate();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
