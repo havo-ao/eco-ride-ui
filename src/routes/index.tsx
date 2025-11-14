@@ -8,8 +8,10 @@ import AppContainer from "../components/AppContainer";
 import { PublicOnly, RequireAuth } from "./guards";
 import { AddCommentPage } from '../pages/AddCommentPage';
 import { CommentsPage } from '../pages/ViewCommentsPage';
+import PaymentMethodsPage from '../pages/PaymentMethodsPage';
 import VerifyEmail from '../pages/VerifyEmail'; 
 import LoyaltyPage from "../pages/LoyaltyPage"
+import UserProfilePage from '../pages/UserProfilePage';
 
 export default function AppRoutes() {
   return (
@@ -89,6 +91,27 @@ export default function AppRoutes() {
           <AppContainer>
             <RequireAuth>
               <RidesPage />
+            </RequireAuth>
+          </AppContainer>
+        }
+      />
+      <Route
+        path="/payment-methods"
+        element={
+          <AppContainer>
+            <RequireAuth>
+              <PaymentMethodsPage />
+            </RequireAuth>
+          </AppContainer>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <AppContainer>
+            <RequireAuth>
+              <UserProfilePage />
             </RequireAuth>
           </AppContainer>
         }
