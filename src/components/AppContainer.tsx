@@ -22,6 +22,7 @@ export default function AppContainer({
       { to: "/home", label: "Home", public: true },
       { to: "/stations", label: "Stations", private: true },
       { to: "/rides", label: "Rides", private: true },
+       { to: "/loyalty", label: "Mis puntos ⭐", private: true },
       { to: "/login", label: "Login", onlyWhenLoggedOut: true },
       { to: "/register", label: "Register", onlyWhenLoggedOut: true },
     ],

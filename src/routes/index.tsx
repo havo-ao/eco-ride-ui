@@ -9,6 +9,7 @@ import { PublicOnly, RequireAuth } from "./guards";
 import { AddCommentPage } from '../pages/AddCommentPage';
 import { CommentsPage } from '../pages/ViewCommentsPage';
 import VerifyEmail from '../pages/VerifyEmail'; 
+import LoyaltyPage from "../pages/LoyaltyPage"
 
 export default function AppRoutes() {
   return (
@@ -34,6 +35,20 @@ export default function AppRoutes() {
           </AppContainer>
         }
       />
+      
+
+<Route
+  path="/loyalty"
+  element={
+    <AppContainer>
+      <RequireAuth>
+        <LoyaltyPage />
+      </RequireAuth>
+    </AppContainer>
+  }
+/>
+
+
       
       <Route
         path="/register"
