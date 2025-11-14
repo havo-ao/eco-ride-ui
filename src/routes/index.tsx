@@ -9,11 +9,13 @@ import { PublicOnly, RequireAuth } from "./guards";
 import { AddCommentPage } from '../pages/AddCommentPage';
 import { CommentsPage } from '../pages/ViewCommentsPage';
 import PaymentMethodsPage from '../pages/PaymentMethodsPage';
+import VerifyEmail from '../pages/VerifyEmail'; 
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/home" replace />} />
+      
       <Route
         path="/home"
         element={
@@ -22,6 +24,7 @@ export default function AppRoutes() {
           </AppContainer>
         }
       />
+      
       <Route
         path="/login"
         element={
@@ -32,6 +35,7 @@ export default function AppRoutes() {
           </AppContainer>
         }
       />
+      
       <Route
         path="/register"
         element={
@@ -42,6 +46,18 @@ export default function AppRoutes() {
           </AppContainer>
         }
       />
+
+      <Route
+        path="/activate/:token"
+        element={
+          <AppContainer>
+            <PublicOnly>
+              <VerifyEmail />
+            </PublicOnly>
+          </AppContainer>
+        }
+      />
+
       <Route
         path="/stations"
         element={
@@ -52,6 +68,7 @@ export default function AppRoutes() {
           </AppContainer>
         }
       />
+
       <Route
         path="/rides"
         element={
@@ -72,20 +89,25 @@ export default function AppRoutes() {
           </AppContainer>
         }
       />
+
       <Route 
         path="/comment" 
         element={
           <AppContainer>
             <AddCommentPage />
           </AppContainer>
-        } /> 
+        } 
+      /> 
+
       <Route 
         path="/commentList" 
         element={
           <AppContainer>
-            <CommentsPage/>
+            <CommentsPage />
           </AppContainer>
-        } /> 
+        } 
+      /> 
+
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );

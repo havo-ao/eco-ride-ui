@@ -66,12 +66,16 @@ export default function LoginPage() {
       localStorage.setItem("auth_token", response.token);
       setSuccess(true);
       setTimeout(() => navigate("/", { replace: true }), 900);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || "Error al iniciar sesión";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
+   } catch (err: any) {
+  if (err.code === "ACCOUNT_NOT_ACTIVE") {
+    setError("Tu cuenta no está activada. Revisa tu correo para activarla.");
+  } else if (err.code === "INVALID_CREDENTIALS") {
+    setError("Email o contraseña incorrectos.");
+  } else {
+    setError(err.message || "Error al iniciar sesión");
+  }
+
+}
   }
 
   return (
