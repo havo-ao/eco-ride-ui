@@ -19,6 +19,7 @@ import {
   bicycleOutline,
   logInOutline,
   personAddOutline,
+  personOutline,
   mapOutline,
   statsChartOutline,
   timeOutline,
@@ -62,6 +63,10 @@ export default function HomePage() {
                   Explorar estaciones
                   <IonIcon slot="end" icon={arrowForwardOutline} />
                 </IonButton>
+                  <IonButton size="large" onClick={() => navigate("/profile") }>
+                    <IonIcon slot="start" icon={personOutline} />
+                    Perfil
+                  </IonButton>
                 <IonButton
                   color="light"
                   size="large"
