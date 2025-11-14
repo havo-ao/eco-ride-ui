@@ -28,6 +28,7 @@ import useReservation from "../../hooks/useReservation";
 import useRide from "../../hooks/useRide";
 import type { BikeType } from "../../services/reservations.service";
 import StationMap from "../../components/StationMap";
+
 import {
   getStationsWithAvailability,
   type StationWithAvailability,
